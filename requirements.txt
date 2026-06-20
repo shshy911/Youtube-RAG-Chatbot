@@ -1,0 +1,11 @@
+fastapi==0.138.0
+uvicorn
+langchain-community==0.4.2
+langchain-core==1.4.8
+langchain-huggingface==1.2.2
+langchain-text-splitters==1.1.2
+chromadb
+sentence-transformers
+pydantic==2.13.4
+python-dotenv==1.2.2
+youtube-transcript-api==1.2.4
