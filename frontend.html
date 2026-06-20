@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Video Chat</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+#statusBox{
+    text-align:center;
+}
+
+#statusText{
+    color:green;
+}
+body{
+    background:#f4f4f4;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    min-height:100vh;
+    padding:40px 20px;
+}
+
+.container{
+    width:100%;
+    max-width:900px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    text-align:center;
+    color:gray;
+    margin-bottom:20px;
+}
+
+.url-section{
+    display:flex;
+    gap:10px;
+}
+
+.url-section input{
+    flex:1;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+}
+
+.url-section button{
+    background:red;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.url-section button:hover{
+    background:darkred;
+}
+
+.chat-container{
+    padding: 25px;
+}
+
+.chat-box{
+    height: 500px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background-color: #fafafa;
+
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.user-message{
+    align-self: flex-end;
+
+    max-width: 70%;
+
+    background-color: #ff4d4d;
+    color: white;
+
+    padding: 12px 16px;
+    border-radius: 15px;
+
+    word-wrap: break-word;
+}
+
+.bot-message{
+    align-self: flex-start;
+
+    max-width: 70%;
+
+    background-color: #e5e5e5;
+    color: black;
+
+    padding: 12px 16px;
+    border-radius: 15px;
+
+    word-wrap: break-word;
+}
+.message{
+    margin-bottom:15px;
+    display:flex;
+}
+
+.user{
+    justify-content:flex-end;
+}
+
+.bot{
+    justify-content:flex-start;
+}
+
+.bubble{
+    padding:12px 15px;
+    border-radius:10px;
+    max-width:70%;
+}
+
+.user .bubble{
+    background:#007bff;
+    color:white;
+}
+
+.bot .bubble{
+    background:#e5e5e5;
+}
+.input-area{
+    display: flex;
+    gap: 10px;
+}
+
+.input-area input{
+    flex: 1;
+
+    padding: 12px;
+
+    border-radius: 10px;
+    border: 1px solid #ccc;
+
+    font-size: 16px;
+}
+
+.input-area button{
+    padding: 12px 20px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: red;
+    color: white;
+
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+        <h1>YouTube Video Chat</h1>
+
+        <p class="subtitle">
+            Paste a YouTube video URL and chat with its content
+        </p>
+
+        <div class="url-section">
+            <input
+                type="text"
+                id="videoUrl"
+                placeholder="Paste YouTube URL here..."
+            >
+
+            <button onclick="analyzeVideo()">
+                Analyze
+            </button>
+        </div>
+    </div>
+    <div class="card" id="statusBox" style="display:none;">
+    <h3 id="statusText">Processing...</h3>
+</div>
+   <div class="card chat-container" id="chatContainer" style="display:none;">
+
+    <h2>Chat About The Video</h2>
+
+    <div class="chat-box" id="chatBox">
+
+    </div>
+
+    <div class="input-area">
+
+        <input
+            type="text"
+            id="questionInput"
+            placeholder="Ask something about the video..."
+        >
+
+        <button onclick="sendMessage()">
+            Send
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+async function analyzeVideo(){
+
+    const url = document.getElementById("videoUrl").value;
+    document.getElementById("statusBox").style.display = "block";
+    document.getElementById("statusText").innerText =
+    "⏳ Processing transcript...";
+
+    if(url.trim() === ""){
+        alert("Please enter a YouTube URL");
+        return;
+    }
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/analyze",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    url: url
+                })
+            }
+        );
+
+        if (!response.ok) {
+
+            const errorData = await response.json();
+
+            alert(errorData.detail);
+
+            return;
+        }
+
+        const data = await response.json();
+
+        document.getElementById("statusText").innerText = "Ready To Chat!!";
+
+        document.getElementById("chatContainer").style.display = "block";
+        document.getElementById("chatBox").innerHTML = "";
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        alert("Could not connect to the server.");
+    }
+}
+
+async function sendMessage(){
+     const input = document.getElementById("questionInput");
+
+    const chatBox = document.getElementById("chatBox");
+
+    const question = input.value.trim();
+
+    if(question === ""){
+        return;
+    }
+
+    const userMessage = document.createElement("div");
+
+    userMessage.classList.add("user-message");
+
+    userMessage.innerText = question;
+
+    chatBox.appendChild(userMessage);
+
+    input.value = "";
+
+    try{
+            const response = await fetch(
+                "http://127.0.0.1:8000/chat",
+                {
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        query:question
+                    })
+                }
+            );
+            if(!response.ok){
+                const errorData = await response.json();
+                alert(errorData.detail);
+                return;
+            }
+            const data = await response.json();
+            const answer = data.answer;
+            
+            const botMessage = document.createElement("div");
+            botMessage.classList.add("bot-message");
+            
+            botMessage.innerText =answer;
+            
+            chatBox.appendChild(botMessage);
+
+            botMessage.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+});
+        }
+        catch(error){
+
+        console.error(error);
+
+        alert("Could not connect to the server.");
+        }
+        
+    document.getElementById("questionInput").addEventListener("keydown", function(event){
+
+    if(event.key === "Enter"){
+        sendMessage();
+    }
+
+});
+};
+
+</script>
+
+</body>
+</html>
